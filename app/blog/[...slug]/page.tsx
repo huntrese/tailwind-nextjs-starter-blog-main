@@ -13,6 +13,9 @@ import PostBanner from '@/layouts/PostBanner'
 import { Metadata } from 'next'
 import siteMetadata from '@/data/siteMetadata'
 import { notFound } from 'next/navigation'
+import PaperDescription from '@/components/PaperDescription'
+import ChatBox from '@/components/ChatBox'
+
 
 const defaultLayout = 'PostLayout'
 const layouts = {
@@ -80,7 +83,6 @@ export const generateStaticParams = async () => {
 export default async function Page(props: { params: Promise<{ slug: string[] }> }) {
   const params = await props.params
   const slug = decodeURI(params.slug.join('/'))
-  // Filter out drafts in production
   const sortedCoreContents = allCoreContent(sortPosts(allBlogs))
   const postIndex = sortedCoreContents.findIndex((p) => p.slug === slug)
   if (postIndex === -1) {
@@ -106,15 +108,52 @@ export default async function Page(props: { params: Promise<{ slug: string[] }> 
 
   const Layout = layouts[post.layout || defaultLayout]
 
+  // Extract paperId from slug
+  const paperId = slug.split('/').pop()
+
+  // Fetch recommendations
+  const recommendationsResponse = await fetch(
+    'https://api.semanticscholar.org/recommendations/v1/papers?limit=5&fields=url,title,paperId',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        positivePaperIds: [paperId],
+        negativePaperIds: [],
+      }),
+    }
+  )
+  const recommendations = await recommendationsResponse.json()
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <Layout content={mainContent} authorDetails={authorDetails} next={next} prev={prev}>
+      <Layout content={mainContent} authorDetails={authorDetails} next={next} prev={prev} className="flex flex-col">
         <MDXLayoutRenderer code={post.body.code} components={components} toc={post.toc} />
+        
+        {/* Display Paper Description */}
+        <PaperDescription paperId={paperId} />
+
+        {/* Display recommendations */}
+        <div className="recommendations">
+          <h2>Recommended Papers</h2>
+          <ul>
+            {recommendations.recommendedPapers.map((paper: any) => (
+              <li key={paper.paperId}>
+                <a href={paper.url} target="_blank" rel="noopener noreferrer">
+                  {paper.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
       </Layout>
-    </>
+       {/* Chat Box */}
+       <ChatBox paperId={paperId} />    </>
   )
 }

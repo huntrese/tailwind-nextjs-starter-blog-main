@@ -78,18 +78,28 @@ function createTagCount(allBlogs) {
   writeFileSync('./app/tag-data.json', JSON.stringify(tagCount))
 }
 
+import { writeFileSync } from 'fs'
+import { allBlogs } from './contentlayer/generated'
+
+function sortPosts(posts) {
+  return posts.sort((a, b) => new Date(b.date) - new Date(a.date))
+}
+
 function createSearchIndex(allBlogs) {
   if (
     siteMetadata?.search?.provider === 'kbar' &&
     siteMetadata.search.kbarConfig.searchDocumentsPath
   ) {
     writeFileSync(
-      `public/${path.basename(siteMetadata.search.kbarConfig.searchDocumentsPath)}`,
-      JSON.stringify(allCoreContent(sortPosts(allBlogs)))
+      `public/${siteMetadata.search.kbarConfig.searchDocumentsPath}`,
+      JSON.stringify(sortPosts(allBlogs)) // Dump full blog content
     )
     console.log('Local search index generated...')
   }
 }
+
+createSearchIndex(allBlogs)
+
 
 export const Blog = defineDocumentType(() => ({
   name: 'Blog',

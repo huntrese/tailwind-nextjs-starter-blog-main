@@ -3,7 +3,7 @@ const siteMetadata = {
   title: 'Next.js Starter Blog',
   author: 'Juan',
   headerTitle: 'LeoneaHelper',
-  description: 'A cool website',
+  description: 'By Juan',
   language: 'en-us',
   theme: 'system', // system, dark or light
   siteUrl: 'https://tailwind-nextjs-starter-blog.vercel.app',
