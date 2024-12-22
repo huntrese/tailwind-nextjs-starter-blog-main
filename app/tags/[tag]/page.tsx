@@ -9,7 +9,7 @@ import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
 export async function generateMetadata(props: {
-  params: Promise<{ tag: string }>
+  params: Promise<{ tag: string; step?: string }>
 }): Promise<Metadata> {
   const params = await props.params
   const tag = decodeURI(params.tag)
@@ -34,16 +34,38 @@ export const generateStaticParams = async () => {
   return paths
 }
 
-export default async function TagPage(props: { params: Promise<{ tag: string }> }) {
+export default async function TagPage(props: { 
+  params: Promise<{ tag: string; step?: string }> 
+}) {
   const params = await props.params
   const tag = decodeURI(params.tag)
-  // Capitalize first letter and convert space to dash
+  const step = params.step ? parseInt(params.step) : 1
+  
   const title = tag[0].toUpperCase() + tag.split(' ').join('-').slice(1)
   const filteredPosts = allCoreContent(
     sortPosts(allBlogs.filter((post) => post.tags && post.tags.map((t) => slug(t)).includes(tag)))
   )
+
   if (filteredPosts.length === 0) {
     return notFound()
   }
-  return <ListLayout posts={filteredPosts} title={title} />
+
+  const POSTS_PER_PAGE = 5
+  const totalSteps = Math.ceil(filteredPosts.length / POSTS_PER_PAGE)
+  const startIndex = (step - 1) * POSTS_PER_PAGE
+  const endIndex = startIndex + POSTS_PER_PAGE
+  const initialDisplayPosts = filteredPosts.slice(startIndex, endIndex)
+
+  return (
+    <ListLayout 
+      posts={filteredPosts}
+      title={title}
+      initialDisplayPosts={initialDisplayPosts}
+      pagination={{
+        currentStep: step,
+        totalSteps: totalSteps,
+        tag: tag
+      }}
+    />
+  )
 }

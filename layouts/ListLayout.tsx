@@ -10,9 +10,11 @@ import Tag from '@/components/Tag'
 import siteMetadata from '@/data/siteMetadata'
 
 interface PaginationProps {
-  totalPages: number
-  currentPage: number
+  totalSteps: number
+  currentStep: number
+  tag: string
 }
+
 interface ListLayoutProps {
   posts: CoreContent<Blog>[]
   title: string
@@ -20,38 +22,36 @@ interface ListLayoutProps {
   pagination?: PaginationProps
 }
 
-function Pagination({ totalPages, currentPage }: PaginationProps) {
-  const pathname = usePathname()
-  const basePath = pathname.split('/')[1]
-  const prevPage = currentPage - 1 > 0
-  const nextPage = currentPage + 1 <= totalPages
+function Pagination({ totalSteps, currentStep, tag }: PaginationProps) {
+  const prevStep = currentStep - 1 > 0
+  const nextStep = currentStep + 1 <= totalSteps
 
   return (
     <div className="space-y-2 pb-8 pt-6 md:space-y-5">
       <nav className="flex justify-between">
-        {!prevPage && (
-          <button className="cursor-auto disabled:opacity-50" disabled={!prevPage}>
+        {!prevStep && (
+          <button className="cursor-auto disabled:opacity-50" disabled={!prevStep}>
             Previous
           </button>
         )}
-        {prevPage && (
+        {prevStep && (
           <Link
-            href={currentPage - 1 === 1 ? `/${basePath}/` : `/${basePath}/page/${currentPage - 1}`}
+            href={`/tags/${tag}/step/${currentStep - 1}`}
             rel="prev"
           >
             Previous
           </Link>
         )}
         <span>
-          {currentPage} of {totalPages}
+          {currentStep} of {totalSteps}
         </span>
-        {!nextPage && (
-          <button className="cursor-auto disabled:opacity-50" disabled={!nextPage}>
+        {!nextStep && (
+          <button className="cursor-auto disabled:opacity-50" disabled={!nextStep}>
             Next
           </button>
         )}
-        {nextPage && (
-          <Link href={`/${basePath}/page/${currentPage + 1}`} rel="next">
+        {nextStep && (
+          <Link href={`/tags/${tag}/step/${currentStep + 1}`} rel="next">
             Next
           </Link>
         )}
@@ -72,7 +72,6 @@ export default function ListLayout({
     return searchContent.toLowerCase().includes(searchValue.toLowerCase())
   })
 
-  // If initialDisplayPosts exist, display it if no searchValue is specified
   const displayPosts =
     initialDisplayPosts.length > 0 && !searchValue ? initialDisplayPosts : filteredBlogPosts
 
@@ -144,8 +143,12 @@ export default function ListLayout({
           })}
         </ul>
       </div>
-      {pagination && pagination.totalPages > 1 && !searchValue && (
-        <Pagination currentPage={pagination.currentPage} totalPages={pagination.totalPages} />
+      {pagination && pagination.totalSteps > 1 && !searchValue && (
+        <Pagination 
+          currentStep={pagination.currentStep} 
+          totalSteps={pagination.totalSteps}
+          tag={pagination.tag}
+        />
       )}
     </>
   )
